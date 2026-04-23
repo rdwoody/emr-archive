@@ -19,6 +19,7 @@ os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 os.makedirs(app.config['IMAGES_FOLDER'], exist_ok=True)
 
 def init_db():
+    """Initialize database tables and ensure crosswalk table exists"""
     """Initialize database tables"""
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
@@ -118,9 +119,37 @@ def init_db():
     c.execute('CREATE INDEX IF NOT EXISTS idx_labs_mrn ON labs(mrn)')
     c.execute('CREATE INDEX IF NOT EXISTS idx_imaging_mrn ON imaging(mrn)')
     c.execute('CREATE INDEX IF NOT EXISTS idx_billing_mrn ON billing(mrn)')
+    c.execute('''CREATE TABLE IF NOT EXISTS mrn_crosswalk (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        legacy_mrn TEXT UNIQUE,
+        epic_mrn TEXT UNIQUE
+    )''')
+    c.execute('CREATE INDEX IF NOT EXISTS idx_crosswalk_epic ON mrn_crosswalk(epic_mrn)')
+    c.execute('CREATE INDEX IF NOT EXISTS idx_crosswalk_legacy ON mrn_crosswalk(legacy_mrn)')
     
     conn.commit()
     conn.close()
+
+# Crosswalk utility functions
+def add_crosswalk(legacy_mrn, epic_mrn):
+    """Insert or update an MRN crosswalk mapping."""
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    try:
+        c.execute('INSERT OR REPLACE INTO mrn_crosswalk (legacy_mrn, epic_mrn) VALUES (?, ?)', (legacy_mrn, epic_mrn))
+        conn.commit()
+        return True
+    finally:
+        conn.close()
+
+def get_epic_mrn(legacy_mrn):
+    """Retrieve the Epic MRN for a given legacy MRN, or None if not found."""
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute('SELECT epic_mrn FROM mrn_crosswalk WHERE legacy_mrn = ?', (legacy_mrn,))
+    row = c.fetchone()
+    conn.close()
+    return row[0] if row else None
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -374,6 +403,36 @@ def stats():
     
     conn.close()
     return render_template('stats.html', stats=stats)
+
+@app.route('/crosswalk', methods=['GET', 'POST'])
+def crosswalk():
+    """Manage MRN crosswalk - add new mappings or search existing."""
+    if request.method == 'POST':
+        legacy_mrn = request.form.get('legacy_mrn', '').strip()
+        epic_mrn = request.form.get('epic_mrn', '').strip()
+        if legacy_mrn and epic_mrn:
+            add_crosswalk(legacy_mrn, epic_mrn)
+            flash(f'Mapped legacy MRN {legacy_mrn} to Epic MRN {epic_mrn}', 'success')
+        else:
+            flash('Please provide both legacy and Epic MRNs', 'error')
+        return redirect(url_for('crosswalk'))
+    
+    # GET: show existing mappings
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+    c.execute('SELECT * FROM mrn_crosswalk ORDER BY legacy_mrn')
+    mappings = c.fetchall()
+    conn.close()
+    return render_template('crosswalk.html', mappings=mappings)
+
+@app.route('/crosswalk/<legacy_mrn>')
+def crosswalk_lookup(legacy_mrn):
+    """Look up Epic MRN for a given legacy MRN."""
+    epic_mrn = get_epic_mrn(legacy_mrn)
+    if epic_mrn:
+        return {'legacy_mrn': legacy_mrn, 'epic_mrn': epic_mrn}
+    return {'error': 'Mapping not found'}, 404
 
 # Field mappings for CSV import
 FIELD_MAPPINGS = {

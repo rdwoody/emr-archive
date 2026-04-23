@@ -1,0 +1,52 @@
+{% extends "layout.html" %}
+
+{% block title %}MRN Crosswalk - EMR Archive{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">MRN Crosswalk Management</h2>
+
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Add New Mapping</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('crosswalk') }}">
+                    <div class="mb-3">
+                        <label for="legacy_mrn" class="form-label">Legacy MRN</label>
+                        <input type="text" class="form-control" id="legacy_mrn" name="legacy_mrn" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="epic_mrn" class="form-label">Epic MRN</label>
+                        <input type="text" class="form-control" id="epic_mrn" name="epic_mrn" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Add Mapping</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<h4>Existing Mappings</h4>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Legacy MRN</th>
+            <th>Epic MRN</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in mappings %}
+        <tr>
+            <td>{{ row.legacy_mrn }}</td>
+            <td>{{ row.epic_mrn }}</td>
+        </tr>
+        {% else %}
+        <tr>
+            <td colspan="2" class="text-muted">No mappings found.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
