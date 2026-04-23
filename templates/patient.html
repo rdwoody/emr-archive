@@ -1,0 +1,169 @@
+{% extends "layout.html" %}
+
+{% block title %}{{ demographics.first_name }} {{ demographics.last_name }} - EMR Archive{% endblock %}
+
+{% block content %}
+<div class="mb-3">
+    <a href="/" class="btn btn-outline-secondary">&larr; Back to Search</a>
+</div>
+
+<h2 class="mb-4">Patient Record: {{ demographics.mrn }}</h2>
+
+<!-- Demographics -->
+<div class="card mb-4">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">Demographics</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-3"><strong>Name:</strong> {{ demographics.first_name }} {{ demographics.last_name }}</div>
+            <div class="col-md-3"><strong>DOB:</strong> {{ demographics.dob }}</div>
+            <div class="col-md-3"><strong>Gender:</strong> {{ demographics.gender }}</div>
+            <div class="col-md-3"><strong>MRN:</strong> {{ demographics.mrn }}</div>
+        </div>
+        <div class="row mt-2">
+            <div class="col-md-6"><strong>Address:</strong> {{ demographics.address }}, {{ demographics.city }}, {{ demographics.state }} {{ demographics.zip }}</div>
+            <div class="col-md-3"><strong>Phone:</strong> {{ demographics.phone }}</div>
+            <div class="col-md-3"><strong>Email:</strong> {{ demographics.email }}</div>
+        </div>
+    </div>
+</div>
+
+<!-- Allergies -->
+<div class="card mb-4">
+    <div class="card-header bg-danger text-white">
+        <h5 class="mb-0">Allergies ({{ allergies|length }})</h5>
+    </div>
+    <div class="card-body">
+        {% if allergies %}
+        <table class="table table-sm">
+            <thead>
+                <tr>
+                    <th>Allergen</th>
+                    <th>Reaction</th>
+                    <th>Severity</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for allergy in allergies %}
+                <tr>
+                    <td>{{ allergy.allergen }}</td>
+                    <td>{{ allergy.reaction }}</td>
+                    <td>{{ allergy.severity }}</td>
+                    <td>{{ allergy.status }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p class="text-muted mb-0">No allergies on file.</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Medications -->
+<div class="card mb-4">
+    <div class="card-header bg-info text-white">
+        <h5 class="mb-0">Medications ({{ medications|length }})</h5>
+    </div>
+    <div class="card-body">
+        {% if medications %}
+        <table class="table table-sm">
+            <thead>
+                <tr>
+                    <th>Medication</th>
+                    <th>Dosage</th>
+                    <th>Frequency</th>
+                    <th>Prescriber</th>
+                    <th>Start Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for med in medications %}
+                <tr>
+                    <td>{{ med.medication_name }}</td>
+                    <td>{{ med.dosage }}</td>
+                    <td>{{ med.frequency }}</td>
+                    <td>{{ med.prescriber }}</td>
+                    <td>{{ med.start_date }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p class="text-muted mb-0">No medications on file.</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Encounters -->
+<div class="card mb-4">
+    <div class="card-header bg-success text-white">
+        <h5 class="mb-0">Encounters ({{ encounters|length }})</h5>
+    </div>
+    <div class="card-body">
+        {% if encounters %}
+        <table class="table table-sm">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Type</th>
+                    <th>Provider</th>
+                    <th>Diagnosis</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for enc in encounters %}
+                <tr>
+                    <td>{{ enc.encounter_date }}</td>
+                    <td>{{ enc.encounter_type }}</td>
+                    <td>{{ enc.provider }}</td>
+                    <td>{{ enc.diagnosis }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p class="text-muted mb-0">No encounters on file.</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Labs -->
+<div class="card mb-4">
+    <div class="card-header bg-warning">
+        <h5 class="mb-0">Lab Results ({{ labs|length }})</h5>
+    </div>
+    <div class="card-body">
+        {% if labs %}
+        <table class="table table-sm">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Test Name</th>
+                    <th>Result</th>
+                    <th>Unit</th>
+                    <th>Reference Range</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for lab in labs %}
+                <tr>
+                    <td>{{ lab.test_date }}</td>
+                    <td>{{ lab.test_name }}</td>
+                    <td>{{ lab.result }}</td>
+                    <td>{{ lab.unit }}</td>
+                    <td>{{ lab.reference_range }}</td>
+                    <td>{{ lab.status }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p class="text-muted mb-0">No lab results on file.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

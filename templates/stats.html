@@ -1,0 +1,50 @@
+{% extends "layout.html" %}
+
+{% block title %}Stats - EMR Archive{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">Database Statistics</h2>
+
+<div class="row">
+    <div class="col-md-4">
+        <div class="card text-center mb-3">
+            <div class="card-body">
+                <h3 class="mb-0">{{ stats.demographics }}</h3>
+                <p class="text-muted mb-0">Patients</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-center mb-3">
+            <div class="card-body">
+                <h3 class="mb-0">{{ stats.encounters }}</h3>
+                <p class="text-muted mb-0">Encounters</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-center mb-3">
+            <div class="card-body">
+                <h3 class="mb-0">{{ stats.medications }}</h3>
+                <p class="text-muted mb-0">Medications</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-center mb-3">
+            <div class="card-body">
+                <h3 class="mb-0">{{ stats.allergies }}</h3>
+                <p class="text-muted mb-0">Allergies</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-center mb-3">
+            <div class="card-body">
+                <h3 class="mb-0">{{ stats.labs }}</h3>
+                <p class="text-muted mb-0">Lab Results</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

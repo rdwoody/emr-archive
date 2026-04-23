@@ -1,0 +1,48 @@
+{% extends "layout.html" %}
+
+{% block title %}Search - EMR Archive{% endblock %}
+
+{% block content %}
+<div class="search-box text-center">
+    <h1 class="mb-4">Patient Search</h1>
+    <form action="/" method="get" class="d-flex">
+        <input type="text" name="q" class="form-control form-control-lg" placeholder="Search by MRN, Name, or DOB..." value="{{ query }}" autofocus>
+        <button type="submit" class="btn btn-primary btn-lg ms-2">Search</button>
+    </form>
+</div>
+
+{% if query %}
+<div class="mt-4">
+    <h4>{{ results|length }} result(s) found</h4>
+    
+    {% if results %}
+    <div class="card mt-3">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>MRN</th>
+                        <th>Last Name</th>
+                        <th>First Name</th>
+                        <th>DOB</th>
+                        <th>Gender</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in results %}
+                    <tr class="patient-row" onclick="window.location='/patient/{{ row.mrn }}'">
+                        <td>{{ row.mrn }}</td>
+                        <td>{{ row.last_name }}</td>
+                        <td>{{ row.first_name }}</td>
+                        <td>{{ row.dob }}</td>
+                        <td>{{ row.gender }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}

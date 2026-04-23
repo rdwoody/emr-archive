@@ -1,0 +1,43 @@
+{% extends "layout.html" %}
+
+{% block title %}Upload - EMR Archive{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">Upload Data</h2>
+
+<div class="card">
+    <div class="card-body">
+        <form method="post" enctype="multipart/form-data">
+            <div class="mb-3">
+                <label class="form-label">Data Type</label>
+                <select name="data_type" class="form-select" required>
+                    <option value="">Select data type...</option>
+                    <option value="demographics">Demographics</option>
+                    <option value="encounters">Encounters</option>
+                    <option value="medications">Medications</option>
+                    <option value="allergies">Allergies</option>
+                    <option value="labs">Lab Results</option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">CSV File</label>
+                <input type="file" name="file" class="form-control" accept=".csv" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Upload</button>
+        </form>
+    </div>
+</div>
+
+<div class="card mt-4">
+    <div class="card-header">
+        <h5 class="mb-0">Expected CSV Headers</h5>
+    </div>
+    <div class="card-body">
+        <p><strong>Demographics:</strong> MRN, First Name, Last Name, DOB, Gender, Address, City, State, ZIP, Phone, Email, SSN</p>
+        <p><strong>Encounters:</strong> MRN, Date, Type, Provider, Diagnosis, Notes</p>
+        <p><strong>Medications:</strong> MRN, Medication, Dosage, Frequency, Start Date, End Date, Prescriber</p>
+        <p><strong>Allergies:</strong> MRN, Allergen, Reaction, Severity, Status</p>
+        <p><strong>Labs:</strong> MRN, Test Name, Result, Unit, Reference Range, Date, Status</p>
+    </div>
+</div>
+{% endblock %}
