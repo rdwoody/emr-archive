@@ -1,0 +1,44 @@
+{% extends "layout.html" %}
+
+{% block title %}Upload Imaging - EMR Archive{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">Upload Imaging</h2>
+
+<div class="card">
+    <div class="card-body">
+        <form method="post" enctype="multipart/form-data">
+            <div class="mb-3">
+                <label class="form-label">Patient MRN</label>
+                <input type="text" name="mrn" class="form-control" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Study Type</label>
+                <select name="study_type" class="form-select" required>
+                    <option value="">Select type...</option>
+                    <option value="X-Ray">X-Ray</option>
+                    <option value="CT">CT Scan</option>
+                    <option value="MRI">MRI</option>
+                    <option value="Ultrasound">Ultrasound</option>
+                    <option value="Mammogram">Mammogram</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Study Date</label>
+                <input type="date" name="study_date" class="form-control" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Description</label>
+                <textarea name="description" class="form-control" rows="2"></textarea>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Image File</label>
+                <input type="file" name="file" class="form-control" accept=".jpg,.jpeg,.png,.dcm" required>
+                <small class="text-muted">Supported: JPG, PNG, DICOM</small>
+            </div>
+            <button type="submit" class="btn btn-primary">Upload</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -166,4 +166,76 @@
         {% endif %}
     </div>
 </div>
+
+<!-- Imaging -->
+<div class="card mb-4">
+    <div class="card-header bg-dark text-white">
+        <h5 class="mb-0">Imaging ({{ imaging|length }})</h5>
+    </div>
+    <div class="card-body">
+        {% if imaging %}
+        <table class="table table-sm">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Type</th>
+                    <th>Description</th>
+                    <th>Findings</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for img in imaging %}
+                <tr>
+                    <td>{{ img.study_date }}</td>
+                    <td>{{ img.study_type }}</td>
+                    <td>{{ img.description }}</td>
+                    <td>{{ img.findings }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p class="text-muted mb-0">No imaging on file.</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Billing -->
+<div class="card mb-4">
+    <div class="card-header bg-secondary text-white">
+        <h5 class="mb-0">Billing ({{ billing|length }})</h5>
+    </div>
+    <div class="card-body">
+        {% if billing %}
+        <table class="table table-sm">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Description</th>
+                    <th>CPT</th>
+                    <th>Charge</th>
+                    <th>Payment</th>
+                    <th>Insurance</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for bill in billing %}
+                <tr>
+                    <td>{{ bill.service_date }}</td>
+                    <td>{{ bill.service_description }}</td>
+                    <td>{{ bill.cpt_code }}</td>
+                    <td>${{ bill.charge }}</td>
+                    <td>${{ bill.payment }}</td>
+                    <td>{{ bill.insurance }}</td>
+                    <td>{{ bill.status }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p class="text-muted mb-0">No billing records on file.</p>
+        {% endif %}
+    </div>
+</div>
 {% endblock %}
