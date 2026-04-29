@@ -1,0 +1,108 @@
+{% extends "layout.html" %}
+
+{% block title %}Application Management - EMR Archive{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">Application Management</h2>
+
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Create New Application</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <input type="hidden" name="action" value="create">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Application Name</label>
+                        <input type="text" class="form-control" id="name" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description</label>
+                        <textarea class="form-control" id="description" name="description" rows="2"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Create Application</button>
+                    <a href="{{ url_for('index') }}" class="btn btn-secondary">Back</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<h4>Existing Applications</h4>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Description</th>
+            <th>Created</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for app in applications %}
+        <tr>
+            <td>{{ app[0] }}</td>
+            <td>{{ app[1] }}</td>
+            <td>{{ app[2] or '' }}</td>
+            <td>{{ app[3] }}</td>
+            <td>
+                <form method="POST" style="display:inline;">
+                    <input type="hidden" name="action" value="delete">
+                    <input type="hidden" name="app_id" value="{{ app[0] }}">
+                    <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')">Delete</button>
+                </form>
+            </td>
+        </tr>
+        {% else %}
+        <tr>
+            <td colspan="5" class="text-muted">No applications found.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<h4 class="mt-4">Manage User Access</h4>
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>User</th>
+            <th>Grant Access to App</th>
+            <th>Revoke Access</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for user in users %}
+        <tr>
+            <td>{{ user[1] }} ({{ user[2] }})</td>
+            <td>
+                <form method="POST" class="d-flex">
+                    <input type="hidden" name="action" value="grant">
+                    <input type="hidden" name="user_id" value="{{ user[0] }}">
+                    <select name="app_id" class="form-select form-select-sm me-2">
+                        {% for app in applications %}
+                        <option value="{{ app[0] }}">{{ app[1] }}</option>
+                        {% endfor %}
+                    </select>
+                    <button type="submit" class="btn btn-sm btn-success">Grant</button>
+                </form>
+            </td>
+            <td>
+                <form method="POST" class="d-flex">
+                    <input type="hidden" name="action" value="revoke">
+                    <input type="hidden" name="user_id" value="{{ user[0] }}">
+                    <select name="app_id" class="form-select form-select-sm me-2">
+                        {% for app in applications %}
+                        <option value="{{ app[0] }}">{{ app[1] }}</option>
+                        {% endfor %}
+                    </select>
+                    <button type="submit" class="btn btn-sm btn-warning">Revoke</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

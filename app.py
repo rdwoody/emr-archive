@@ -2,8 +2,10 @@ import os
 import sqlite3
 import csv
 import shutil
-from flask import Flask, render_template, request, redirect, url_for, flash, send_from_directory
+from flask import Flask, render_template, request, redirect, url_for, flash, send_from_directory, session
 from werkzeug.utils import secure_filename
+from flask_login import LoginManager, login_user, logout_user, login_required, current_user
+from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
 app.secret_key = 'emr-archive-secret-key'
@@ -17,6 +19,174 @@ ALLOWED_EXTENSIONS = {'csv', 'xml', 'ccd'}
 # Ensure folders exist
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 os.makedirs(app.config['IMAGES_FOLDER'], exist_ok=True)
+
+# Flask-Login setup
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'login'
+
+@login_manager.user_loader
+def load_user(user_id):
+    return User(int(user_id))
+
+class User:
+    def __init__(self, id):
+        self.id = id
+        user = get_user(id)
+        if user:
+            self.username = user[1]
+            self.role = user[2]
+        else:
+            self.username = None
+            self.role = None
+    
+    def is_authenticated(self:
+        return self.username is not None
+    
+    def is_active(self:
+        return True
+    
+    def is_anonymous(self:
+        return False
+    
+    def get_id(self):
+        return str(self.id)
+
+# Authentication routes
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form.get('username', '').strip()
+        password = request.form.get('password', '')
+        
+        user_data = verify_user(username, password)
+        if user_data:
+            user = User(user_data['id'])
+            login_user(user)
+            log_audit(user.id, user.username, 'LOGIN', 'User logged in')
+            
+            # Update last login
+            conn = sqlite3.connect(DB_PATH)
+            c = conn.cursor()
+            c.execute('UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE id = ?', (user.id,))
+            conn.commit()
+            conn.close()
+            
+            return redirect(url_for('index'))
+        else:
+            flash('Invalid username or password', 'error')
+    
+    return render_template('login.html')
+
+@app.route('/logout')
+@login_required
+def logout():
+    username = current_user.username
+    user_id = current_user.id
+    logout_user()
+    log_audit(user_id, username, 'LOGOUT', 'User logged out')
+    flash('You have been logged out', 'success')
+    return redirect(url_for('login'))
+
+# Admin routes
+@app.route('/admin/users', methods=['GET', 'POST'])
+@login_required
+def admin_users():
+    if current_user.role != 'admin':
+        flash('Access denied', 'error')
+        return redirect(url_for('index'))
+    
+    if request.method == 'POST':
+        action = request.form.get('action')
+        
+        if action == 'create':
+            username = request.form.get('username', '').strip()
+            password = request.form.get('password', '')
+            role = request.form.get('role', 'user')
+            
+            if username and password:
+                if create_user(username, password, role):
+                    flash(f'User {username} created successfully', 'success')
+                    log_audit(current_user.id, current_user.username, 'USER_CREATE', f'Created user: {username}')
+                else:
+                    flash('Username already exists', 'error')
+        elif action == 'delete':
+            user_id = request.form.get('user_id')
+            if user_id:
+                conn = sqlite3.connect(DB_PATH)
+                c = conn.cursor()
+                c.execute('SELECT username FROM users WHERE id = ?', (user_id,))
+                row = c.fetchone()
+                if row:
+                    c.execute('DELETE FROM users WHERE id = ?', (user_id,))
+                    conn.commit()
+                    flash(f'User deleted', 'success')
+                    log_audit(current_user.id, current_user.username, 'USER_DELETE', f'Deleted user: {row[0]}')
+                conn.close()
+    
+    users = get_all_users()
+    return render_template('admin_users.html', users=users)
+
+@app.route('/admin/applications', methods=['GET', 'POST'])
+@login_required
+def admin_applications():
+    if current_user.role != 'admin':
+        flash('Access denied', 'error')
+        return redirect(url_for('index'))
+    
+    if request.method == 'POST':
+        action = request.form.get('action')
+        
+        if action == 'create':
+            name = request.form.get('name', '').strip()
+            description = request.form.get('description', '')
+            
+            if name:
+                create_application(name, description)
+                flash(f'Application {name} created', 'success')
+                log_audit(current_user.id, current_user.username, 'APP_CREATE', f'Created app: {name}')
+        elif action == 'delete':
+            app_id = request.form.get('app_id')
+            if app_id:
+                conn = sqlite3.connect(DB_PATH)
+                c = conn.cursor()
+                c.execute('SELECT name FROM applications WHERE id = ?', (app_id,))
+                row = c.fetchone()
+                if row:
+                    c.execute('DELETE FROM applications WHERE id = ?', (app_id,))
+                    c.execute('DELETE FROM user_app_access WHERE app_id = ?', (app_id,))
+                    conn.commit()
+                    flash(f'Application deleted', 'success')
+                    log_audit(current_user.id, current_user.username, 'APP_DELETE', f'Deleted app: {row[0]}')
+                conn.close()
+        elif action == 'grant':
+            user_id = request.form.get('user_id')
+            app_id = request.form.get('app_id')
+            if user_id and app_id:
+                grant_user_app_access(user_id, app_id)
+                log_audit(current_user.id, current_user.username, 'ACCESS_GRANT', f'Granted user {user_id} access to app {app_id}')
+                flash('Access granted', 'success')
+        elif action == 'revoke':
+            user_id = request.form.get('user_id')
+            app_id = request.form.get('app_id')
+            if user_id and app_id:
+                revoke_user_app_access(user_id, app_id)
+                log_audit(current_user.id, current_user.username, 'ACCESS_REVOKE', f'Revoked user {user_id} access to app {app_id}')
+                flash('Access revoked', 'success')
+    
+    applications = get_all_applications()
+    users = get_all_users()
+    return render_template('admin_applications.html', applications=applications, users=users)
+
+@app.route('/admin/audit')
+@login_required
+def admin_audit():
+    if current_user.role != 'admin':
+        flash('Access denied', 'error')
+        return redirect(url_for('index'))
+    
+    logs = get_audit_log(200)
+    return render_template('admin_audit.html', logs=logs)
 
 def init_db():
     """Initialize database tables and ensure crosswalk table exists"""
@@ -127,8 +297,164 @@ def init_db():
     c.execute('CREATE INDEX IF NOT EXISTS idx_crosswalk_epic ON mrn_crosswalk(epic_mrn)')
     c.execute('CREATE INDEX IF NOT EXISTS idx_crosswalk_legacy ON mrn_crosswalk(legacy_mrn)')
     
+    # Users table
+    c.execute('''CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT UNIQUE NOT NULL,
+        password_hash TEXT NOT NULL,
+        role TEXT DEFAULT 'user',
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        last_login TEXT
+    )''')
+    
+    # Applications table
+    c.execute('''CREATE TABLE IF NOT EXISTS applications (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        description TEXT,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )''')
+    
+    # User-Application access table
+    c.execute('''CREATE TABLE IF NOT EXISTS user_app_access (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER,
+        app_id INTEGER,
+        FOREIGN KEY (user_id) REFERENCES users(id),
+        FOREIGN KEY (app_id) REFERENCES applications(id),
+        UNIQUE(user_id, app_id)
+    )''')
+    
+    # Audit log table
+    c.execute('''CREATE TABLE IF NOT EXISTS audit_log (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER,
+        username TEXT,
+        action TEXT NOT NULL,
+        details TEXT,
+        ip_address TEXT,
+        timestamp TEXT DEFAULT CURRENT_TIMESTAMP
+    )''')
+    
     conn.commit()
     conn.close()
+
+# Audit logging
+def log_audit(user_id, username, action, details='', ip_address=''):
+    """Log an audit event."""
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute('INSERT INTO audit_log (user_id, username, action, details, ip_address) VALUES (?, ?, ?, ?, ?)',
+              (user_id, username, action, details, ip_address))
+    conn.commit()
+    conn.close()
+
+# User management functions
+def create_user(username, password, role='user'):
+    """Create a new user with hashed password."""
+    from werkzeug.security import generate_password_hash
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    try:
+        c.execute('INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)',
+                  (username, generate_password_hash(password), role))
+        conn.commit()
+        return True
+    except sqlite3.IntegrityError:
+        return False
+    finally:
+        conn.close()
+
+def verify_user(username, password):
+    """Verify username and password."""
+    from werkzeug.security import check_password_hash
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute('SELECT id, password_hash, role FROM users WHERE username = ?', (username,))
+    row = c.fetchone()
+    conn.close()
+    if row and check_password_hash(row[1], password):
+        return {'id': row[0], 'role': row[1]}
+    return None
+
+def get_user(user_id):
+    """Get user by ID."""
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute('SELECT id, username, role, created_at, last_login FROM users WHERE id = ?', (user_id,))
+    row = c.fetchone()
+    conn.close()
+    return row
+
+def get_all_users():
+    """Get all users."""
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute('SELECT id, username, role, created_at, last_login FROM users ORDER BY username')
+    rows = c.fetchall()
+    conn.close()
+    return rows
+
+# Application management functions
+def create_application(name, description=''):
+    """Create a new application."""
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    try:
+        c.execute('INSERT INTO applications (name, description) VALUES (?, ?)', (name, description))
+        conn.commit()
+        return True
+    finally:
+        conn.close()
+
+def get_all_applications():
+    """Get all applications."""
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute('SELECT id, name, description, created_at FROM applications ORDER BY name')
+    rows = c.fetchall()
+    conn.close()
+    return rows
+
+def get_user_applications(user_id):
+    """Get applications a user has access to."""
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute('''SELECT a.id, a.name, a.description 
+                 FROM applications a 
+                 JOIN user_app_access uaa ON a.id = uaa.app_id 
+                 WHERE uaa.user_id = ?''', (user_id,))
+    rows = c.fetchall()
+    conn.close()
+    return rows
+
+def grant_user_app_access(user_id, app_id):
+    """Grant a user access to an application."""
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    try:
+        c.execute('INSERT OR IGNORE INTO user_app_access (user_id, app_id) VALUES (?, ?)', (user_id, app_id))
+        conn.commit()
+        return True
+    finally:
+        conn.close()
+
+def revoke_user_app_access(user_id, app_id):
+    """Revoke a user's access to an application."""
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute('DELETE FROM user_app_access WHERE user_id = ? AND app_id = ?', (user_id, app_id))
+    conn.commit()
+    conn.close()
+
+def get_audit_log(limit=100):
+    """Get recent audit log entries."""
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute('SELECT id, username, action, details, ip_address, timestamp FROM audit_log ORDER BY timestamp DESC LIMIT ?', (limit,))
+    rows = c.fetchall()
+    conn.close()
+    return rows
 
 # Crosswalk utility functions
 def add_crosswalk(legacy_mrn, epic_mrn):
@@ -522,4 +848,11 @@ FIELD_MAPPINGS = {
 
 if __name__ == '__main__':
     init_db()
+    
+    # Create default admin user if none exists
+    users = get_all_users()
+    if not users:
+        create_user('admin', 'admin123', 'admin')
+        print('Default admin user created: admin / admin123')
+    
     app.run(debug=True, host='0.0.0.0', port=5000)

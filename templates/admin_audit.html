@@ -1,0 +1,40 @@
+{% extends "layout.html" %}
+
+{% block title %}Audit Log - EMR Archive{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">Audit Log</h2>
+
+<p class="text-muted">Showing last 200 events</p>
+
+<table class="table table-striped table-sm">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Username</th>
+            <th>Action</th>
+            <th>Details</th>
+            <th>IP Address</th>
+            <th>Timestamp</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for log in logs %}
+        <tr>
+            <td>{{ log[0] }}</td>
+            <td>{{ log[1] }}</td>
+            <td><span class="badge bg-info">{{ log[2] }}</span></td>
+            <td>{{ log[3] or '' }}</td>
+            <td>{{ log[4] or '-' }}</td>
+            <td>{{ log[5] }}</td>
+        </tr>
+        {% else %}
+        <tr>
+            <td colspan="6" class="text-muted">No audit logs found.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<a href="{{ url_for('index') }}" class="btn btn-secondary">Back</a>
+{% endblock %}
