@@ -1,0 +1,75 @@
+MRN,Allergen,Reaction,Severity,Status
+MRN0003,Sulfamethoxazole / Trimethoprim,,,active
+MRN0003,Eggs (edible) (substance),,,active
+MRN0014,Mold (organism),,,active
+MRN0027,Wheat (substance),,,active
+MRN0028,Mold (organism),,,active
+MRN0028,House dust mite (organism),,,active
+MRN0028,Animal dander (substance),,,active
+MRN0028,Grass pollen (substance),,,active
+MRN0028,Tree pollen (substance),,,active
+MRN0028,Aspirin,,,active
+MRN0028,Penicillin V,,,active
+MRN0028,Eggs (edible) (substance),,,active
+MRN0034,Lisinopril,,,active
+MRN0034,Eggs (edible) (substance),,,active
+MRN0045,Mold (organism),,,active
+MRN0045,Animal dander (substance),,,active
+MRN0046,Lisinopril,,,active
+MRN0047,House dust mite (organism),,,active
+MRN0047,Lisinopril,,,active
+MRN0047,Aspirin,,,active
+MRN0047,Shellfish (substance),,,active
+MRN0060,Sulfamethoxazole / Trimethoprim,,,active
+MRN0063,Ibuprofen,,,active
+MRN0063,Fish (substance),,,active
+MRN0064,Mold (organism),,,active
+MRN0064,House dust mite (organism),,,active
+MRN0064,Animal dander (substance),,,active
+MRN0064,Grass pollen (substance),,,active
+MRN0064,Tree pollen (substance),,,active
+MRN0064,Soya bean (substance),,,active
+MRN0064,Eggs (edible) (substance),,,active
+MRN0066,Bee venom (substance),,,active
+MRN0066,Mold (organism),,,active
+MRN0066,House dust mite (organism),,,active
+MRN0066,Animal dander (substance),,,active
+MRN0066,Grass pollen (substance),,,active
+MRN0066,Tree pollen (substance),,,active
+MRN0066,Tree nut (substance),,,active
+MRN0073,Animal dander (substance),,,active
+MRN0075,Tree nut (substance),,,active
+MRN0084,Bee venom (substance),,,active
+MRN0084,Mold (organism),,,active
+MRN0084,House dust mite (organism),,,active
+MRN0084,Animal dander (substance),,,active
+MRN0084,Tree pollen (substance),,,active
+MRN0084,Fish (substance),,,active
+MRN0101,Mold (organism),,,active
+MRN0101,House dust mite (organism),,,active
+MRN0101,Animal dander (substance),,,active
+MRN0101,Grass pollen (substance),,,active
+MRN0101,Tree pollen (substance),,,active
+MRN0101,Eggs (edible) (substance),,,active
+MRN0101,Tree nut (substance),,,active
+MRN0103,Fish (substance),,,active
+MRN0104,Shellfish (substance),,,active
+MRN0105,Mold (organism),,,active
+MRN0105,House dust mite (organism),,,active
+MRN0105,Animal dander (substance),,,active
+MRN0105,Grass pollen (substance),,,active
+MRN0105,Tree pollen (substance),,,active
+MRN0105,Aspirin,,,active
+MRN0105,Cow's milk (substance),,,active
+MRN0105,Eggs (edible) (substance),,,active
+MRN0105,Fish (substance),,,active
+MRN0120,Aspirin,,,active
+MRN0120,Shellfish (substance),,,active
+MRN0122,Mold (organism),,,active
+MRN0122,House dust mite (organism),,,active
+MRN0122,Animal dander (substance),,,active
+MRN0122,Grass pollen (substance),,,active
+MRN0122,Tree pollen (substance),,,active
+MRN0122,Penicillin V,,,active
+MRN0122,Eggs (edible) (substance),,,active
+MRN0134,Wheat (substance),,,active
