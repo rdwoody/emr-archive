@@ -154,8 +154,15 @@ def get_epic_mrn(legacy_mrn):
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-def import_csv(table_name, filepath, field_mapping):
-    """Import CSV into database table"""
+def import_csv(table_name, filepath, field_mapping, resolve_epic=False):
+    """Import CSV into database table
+    
+    Args:
+        table_name: Target database table
+        filepath: Path to CSV file
+        field_mapping: Dict mapping DB fields to CSV column names
+        resolve_epic: If True, resolve legacy MRNs to Epic MRNs using crosswalk table
+    """
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
     
@@ -168,7 +175,12 @@ def import_csv(table_name, filepath, field_mapping):
             try:
                 values = []
                 for db_field, csv_field in field_mapping.items():
-                    if csv_field in row and row[csv_field]:
+                    # Handle Epic MRN resolution for demographics
+                    if resolve_epic and db_field == 'mrn':
+                        legacy_mrn = row.get(csv_field, '').strip()
+                        epic_mrn = get_epic_mrn(legacy_mrn)
+                        values.append(epic_mrn if epic_mrn else legacy_mrn)
+                    elif csv_field in row and row[csv_field]:
                         values.append(row[csv_field])
                     else:
                         values.append('')
@@ -350,8 +362,11 @@ def upload():
                 mappings = FIELD_MAPPINGS.get(data_type, {})
                 if mappings:
                     try:
-                        rows, errors = import_csv(data_type, filepath, mappings)
-                        flash(f'Successfully imported {rows} records' + (f', {errors} errors' if errors else ''), 'success')
+                        # Check if we should resolve to Epic MRN
+                        resolve_epic = request.form.get('resolve_epic') == 'on'
+                        rows, errors = import_csv(data_type, filepath, mappings, resolve_epic=resolve_epic)
+                        resolve_msg = ' (resolved to Epic MRNs)' if resolve_epic else ''
+                        flash(f'Successfully imported {rows} records{resolve_msg}' + (f', {errors} errors' if errors else ''), 'success')
                     except Exception as e:
                         flash(f'Error importing file: {str(e)}', 'error')
                 else:
@@ -433,6 +448,40 @@ def crosswalk_lookup(legacy_mrn):
     if epic_mrn:
         return {'legacy_mrn': legacy_mrn, 'epic_mrn': epic_mrn}
     return {'error': 'Mapping not found'}, 404
+
+@app.route('/crosswalk/import', methods=['GET', 'POST'])
+def crosswalk_import():
+    """Bulk import MRN crosswalk mappings from CSV."""
+    if request.method == 'POST':
+        file = request.files.get('file')
+        if not file:
+            flash('Please select a file', 'error')
+            return redirect(url_for('crosswalk_import'))
+        
+        if file and allowed_file(file.filename):
+            filename = secure_filename(file.filename)
+            filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            file.save(filepath)
+            
+            try:
+                with open(filepath, 'r', encoding='utf-8-sig') as f:
+                    reader = csv.DictReader(f)
+                    count = 0
+                    for row in reader:
+                        legacy_mrn = row.get('legacy_mrn', '').strip()
+                        epic_mrn = row.get('epic_mrn', '').strip()
+                        if legacy_mrn and epic_mrn:
+                            add_crosswalk(legacy_mrn, epic_mrn)
+                            count += 1
+                    flash(f'Imported {count} MRN mappings', 'success')
+            except Exception as e:
+                flash(f'Error importing CSV: {str(e)}', 'error')
+            
+            return redirect(url_for('crosswalk_import'))
+        else:
+            flash('Invalid file type. Please upload a CSV file.', 'error')
+    
+    return render_template('crosswalk_import.html')
 
 # Field mappings for CSV import
 FIELD_MAPPINGS = {

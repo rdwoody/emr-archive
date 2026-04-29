@@ -1,0 +1,44 @@
+{% extends "layout.html" %}
+
+{% block title %}Import MRN Crosswalk - EMR Archive{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">Bulk Import MRN Crosswalk</h2>
+
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Upload CSV File</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('crosswalk_import') }}" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label for="file" class="form-label">Select CSV File</label>
+                        <input type="file" class="form-control" id="file" name="file" accept=".csv" required>
+                    </div>
+                    <p class="text-muted">CSV file should have two columns: <code>legacy_mrn</code> and <code>epic_mrn</code></p>
+                    <button type="submit" class="btn btn-primary">Import Mappings</button>
+                    <a href="{{ url_for('crosswalk') }}" class="btn btn-secondary">Back to Crosswalk</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">CSV Format Example</h5>
+            </div>
+            <div class="card-body">
+                <pre class="bg-light p-3">legacy_mrn,epic_mrn
+MRN001,E001
+MRN002,E002
+MRN003,E003</pre>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
