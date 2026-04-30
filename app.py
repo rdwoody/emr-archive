@@ -745,6 +745,31 @@ def stats():
     conn.close()
     return render_template('stats.html', stats=stats)
 
+@app.route('/admin/purge', methods=['POST'])
+@login_required
+def purge_data():
+    """Purge all patient data (keep users and crosswalk)."""
+    if current_user.role != 'admin':
+        flash('Access denied', 'error')
+        return redirect(url_for('index'))
+    
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    
+    # Tables to purge (patient data only)
+    data_tables = ['demographics', 'encounters', 'medications', 'allergies', 'labs', 'imaging', 'billing']
+    
+    for table in data_tables:
+        c.execute(f'DELETE FROM {table}')
+    
+    conn.commit()
+    conn.close()
+    
+    log_audit(current_user.id, current_user.username, 'DATA_PURGE', 'All patient data cleared')
+    flash('All patient data has been purged', 'success')
+    return redirect(url_for('stats'))
+
+
 @app.route('/crosswalk', methods=['GET', 'POST'])
 def crosswalk():
     """Manage MRN crosswalk - add new mappings or search existing."""

@@ -63,4 +63,12 @@
         </div>
     </div>
 </div>
+
+<div class="mt-4 p-3 bg-danger bg-opacity-10 rounded">
+    <h5 class="text-danger">Danger Zone</h5>
+    <p class="mb-2">This will delete all patient data (demographics, encounters, medications, allergies, labs, imaging, billing) but keep users and crosswalk mappings.</p>
+    <form method="POST" action="{{ url_for('purge_data') }}" style="display:inline;">
+        <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure? This cannot be undone!')">Purge All Patient Data</button>
+    </form>
+</div>
 {% endblock %}
